@@ -110,7 +110,7 @@ void pion_detect(std::string fileName_mc = "tf1/sgn_1_Kine.root", std::string fi
   std::cout << "Number of ITSTPCAB tracks:" << itstpcabLabArr->size();
   std::cout << '\n';
   ////////////////////////////////////////////////////////////////
-  // TH1F h("Check1", "Sigma momentum (Track Total); Gev/c; Number", 60, 0, 15);
+  TH1F h1("Check1", "Sigma radius (Track Total); cm; Number", 100, 0, 100);
   // TH1F h1("Check2", "Sigma momentum (Track Pt)", 60, 0, 15);
   // TH1F h2("Check3", "Sigma Eta (Track)", 60, -1.1, 1.1);
   // TH1F h3("Check4", "Sigma Resolution mom. (Track)", 120, -15, 15);
@@ -144,6 +144,7 @@ void pion_detect(std::string fileName_mc = "tf1/sgn_1_Kine.root", std::string fi
       info[n][m].pt = part.GetPt();
       info[n][m].fDaughterId = part.getFirstDaughterTrackId();
       info[n][m].lDaughterId = part.getLastDaughterTrackId();
+
       if (std::abs(part.GetPdgCode()) == 3112)
         counter++;
     }
@@ -310,7 +311,7 @@ void pion_detect(std::string fileName_mc = "tf1/sgn_1_Kine.root", std::string fi
   }
 
 
-  TFile file("/home/justas_t/pion_detect_007.root", "recreate");
+  TFile file("/home/justas_t/SigmaP/pion_detect_007.root", "recreate");
   TTree tree("PInfo", "PInfo");
   PInfo pInfo;
   tree.Branch("particle", &pInfo);
@@ -320,14 +321,14 @@ void pion_detect(std::string fileName_mc = "tf1/sgn_1_Kine.root", std::string fi
     {
 
       pInfo = part;
-      if (std::abs(pInfo.pdg) != 211 && std::abs(pInfo.pdg) != 3112) //&& std::abs(pInfo.pdg) != 2112) //save only pion and sigma
+      if (std::abs(pInfo.pdg) != 211 && std::abs(pInfo.pdg) != 3222 &&std::abs(pInfo.pdg) != 3112) //&& std::abs(pInfo.pdg) != 2112) //save only pion and sigma
         continue;
       tree.Fill();
     }
   }
   tree.Write();
   // h.Write();
-  //  h1.Write();
+  // h1.Write();
   //  h2.Write();
   //  h3.Write();
   //  h4.Write();

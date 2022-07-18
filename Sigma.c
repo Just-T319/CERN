@@ -16,7 +16,7 @@ void Sigma()
   TChain trackTree("o2sim");
   TChain mcTree("o2sim");
 
-  for (int l{1}; l <= 1; ++l)
+  for (int l{1}; l <= 29; ++l)
   {
     auto fileName_mc = Form("tf%i/sgn_%i_Kine.root", l, l);
     auto fileName = Form("tf%i/o2trac_its.root", l);
@@ -54,6 +54,7 @@ void Sigma()
 
   int goodTr = 0;
   int nsigmam = 0;
+  int nsigmamanti = 0;
   int fileNum = 0;
   int fake_tr = 0;
   int fake_sigma = 0;
@@ -107,9 +108,9 @@ void Sigma()
       int neutron = 0, pion = 0;
       auto track = mcArr->at(m);
 
-      if (std::abs(track.GetRapidity()) > 1) continue; // reject not in central rapidity
-
-      if (std::abs(track.GetPdgCode()) == 3112) // check for sigma minus
+      //if (std::abs(track.GetRapidity()) > 1) continue; // reject not in central rapidity
+      if (std::abs(track.GetPdgCode()) == 3112) nsigmamanti++;
+      if (std::abs(track.GetPdgCode()) == 3222) // check for sigma plus
       {
         float dX = 0., dY = 0., dZ = 0., L = 0., daughterT = 0.;
         int counter = 0;
@@ -208,18 +209,20 @@ void Sigma()
   std::cout << '\n';
   std::cout << "Total fake tracks:" << fake_tr;
   std::cout << '\n';
-  std::cout << "Total Sigma minus Baryons:" << nsigmam;
+  std::cout << "Total Sigma plus Baryons:" << nsigmam;
+  std::cout << '\n';
+  std::cout << "Total Sigma minus anti Baryons:" << nsigmamanti;
   std::cout << '\n';
   std::cout << "Total Sigma resulting in corect decay:" << tempcounter;
   std::cout << '\n';
 
   TF1 *func = new TF1("fit", exp, 0, 90, 2);
-  func->SetParameters(50, h1.GetMean());
+  func->SetParameters(20, h1.GetMean());
   func->SetParNames("Pre_Factor", "Mean_value");
   h1.Fit("fit");
   h1.Chisquare(func);
 
-  TFile outputFile("/home/justas_t/sigma_anlz_007.root", "recreate");
+  TFile outputFile("/home/justas_t/SigmaP/sigmaplus_anlz_007.root", "recreate");
 
   h1.Write();
   h2.Write();

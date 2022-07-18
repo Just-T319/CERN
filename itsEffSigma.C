@@ -24,9 +24,9 @@ void itsEffSigma()
 
   ROOT::RDataFrame par0Tree("ParticleInfo", "~/CheckTracksCA_007.root");
   auto parTree = par0Tree.Filter("std::abs(rapid) < 1");
-  TH1F h1("itsEff_gen", "Eff_gen; hits", 4, 3.5, 7.5);
-  TH1F h2("itsEff_rec", "Eff_rec; hits", 4, 3.5, 7.5);
-  TH1F h3("itsEff", "Efficiency; hits", 4, 3.5, 7.5);
+  TH1F h1("itsEff_gen", "Eff_gen; hits", 5, 2.5, 7.5);
+  TH1F h2("itsEff_rec", "Eff_rec; hits", 5, 2.5, 7.5);
+  TH1F h3("itsEff", "Efficiency; hits", 5, 2.5, 7.5);
   TH1F h4("itsEff_mom_rec", "Efficiency; GeV/c", 60, 0, 15);
   TH1F h5("itsEff_mom_gen", "Efficiency; GeV/c", 60, 0, 15);
   TH1F h8("its_mom_notFake", "MomentumNotFake; GeV/c", 60, 0, 15);
@@ -48,7 +48,7 @@ void itsEffSigma()
   //   //auto temp = nsigma0->GetValue();
   //  // std::cout << *temp << std::endl;
 
-  auto nsigma = parTree.Filter("std::abs(pdg) == 3112 && clusters >= (pow(2,4)-1)").Count();
+  auto nsigma = parTree.Filter("pdg == 3222 && clusters >= (pow(2,4)-1)").Count();
   float temp0 = *nsigma;
 
   // auto gr = new TGraph();
@@ -56,12 +56,12 @@ void itsEffSigma()
 
   std::cout << "Total Sigma in ITS (more than 4 hits): " << *nsigma << std::endl;
 
-  for (int i = 4; i < 8; ++i)
+  for (int i = 3; i < 8; ++i)
   {
 
-    auto nnsigma = parTree.Filter(Form("std::abs(pdg) == 3112 && clusters == (pow(2,%i)-1)", i)).Count();
-    auto crsigma = parTree.Filter(Form("std::abs(pdg) == 3112 && clusters == (pow(2,%i)-1) && isReco > 0 ", i)).Count();
-    auto recofakesigma = parTree.Filter(Form("std::abs(pdg) == 3112 && clusters == (pow(2,%i)-1) && isFake > 0 ", i)).Count();
+    auto nnsigma = parTree.Filter(Form("pdg == 3222 && clusters == (pow(2,%i)-1)", i)).Count();
+    auto crsigma = parTree.Filter(Form("pdg == 3222 && clusters == (pow(2,%i)-1) && isReco > 0 ", i)).Count();
+    auto recofakesigma = parTree.Filter(Form("pdg == 3222 && clusters == (pow(2,%i)-1) && isFake > 0 ", i)).Count();
     float temp1 = *crsigma;
     float temp2 = *recofakesigma;
     float temp3 = *nnsigma;
@@ -87,26 +87,31 @@ void itsEffSigma()
   }
 
   // gr->Draw("AL*");
-  auto totalgensigma = parTree.Filter("std::abs(pdg) == 3112").Count();
+  auto totalgensigma = parTree.Filter("pdg == 3222").Count();
   float tempgen = *totalgensigma;
   std::cout << "  " << tempgen << std::endl;
   h3 = h2 / h1;
   TH1F h6 = h2 * (1 / tempgen);
 
-  auto mom_rec = parTree.Filter("std::abs(pdg) == 3112 && (isReco > 0 || isFake > 0)");
-  auto mom_gen = parTree.Filter("std::abs(pdg) == 3112");
+  auto mom_rec = parTree.Filter("pdg == 3222 && (isReco > 0 || isFake > 0)");
+  auto mom_gen = parTree.Filter("pdg == 3222");
   auto h4c = mom_rec.Take<float>("pt"); // Histo1D({"itsEff_mom_rec", "histTitle", 20, 0., 5.},
   auto h5c = mom_gen.Take<float>("pt"); // Histo1D({"itsEff_mom_rec", "histTitle", 20, 0., 5.},
 
   // auto pt = parTree.Take<float>("pt"); //Histo1D({"itsEff_mom_rec", "histTitle", 20, 0., 5.},
   // auto h5c = mom_gen.Take<float>("pt"); //Histo1D({"itsEff_mom_rec", "histTitle", 20, 0., 5.},
-  auto purNotf = parTree.Filter("std::abs(pdg) == 3112 && isReco > 0 && isFake <= 0");
-  auto purAll = parTree.Filter("std::abs(pdg) == 3112");
+  auto purNotf = parTree.Filter("pdg == 3222 && isReco > 0 && isFake <= 0");
+  auto purAll = parTree.Filter("pdg == 3222");
   auto ptNotf = purNotf.Take<float>("pt");
 
   for (auto &myItem : ptNotf)
   {
     h8.Fill(myItem);
+  }
+
+  for (auto &myItem : sigmaR)
+  {
+    h10.Fill(myItem);
   }
 
   for (auto &myItem : h4c)
@@ -125,7 +130,7 @@ void itsEffSigma()
   h9.SetTitle("Purity of Sigma tracks");
   h7.SetTitle("Efficiency of Sigma tracks");
 
-  TFile outputFile("/home/justas_t/efficiency_007_sigma_central.root", "recreate");
+  TFile outputFile("/home/justas_t/SigmaP/efficiency_007_sigmaplus_central.root", "recreate");
 
   // gr->Write();
   h1.Write();

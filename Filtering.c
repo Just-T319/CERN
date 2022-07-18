@@ -19,6 +19,8 @@ struct PInfo
     unsigned char isFakeTPC = 0u;
     unsigned char isFakeITSTPC = 0u;
     unsigned char isFakeITSTPCAB = 0u;
+    unsigned short clusters = 0u;
+    unsigned short clustersITS = 0u;
     std::vector<double> Vcoor;
     float E;
     float M;
@@ -55,7 +57,7 @@ void Filtering()
 {
 
     ///////////Loading Data//////////////////////////////////
-    auto fileName = "~/pion_detect_007.root";
+    auto fileName = "~/SigmaP/pion_detect_007.root";
     auto fileName_mc = "tf1/sgn_1_Kine.root";
     ROOT::RDataFrame parTree("PInfo", fileName);
     TChain mcTree("o2sim");
@@ -102,16 +104,16 @@ void Filtering()
     ///////////////////////////////////////////////////////////
 
     //////////Some Preliminary Info///////////////////////////
-    auto nsigma = parTree.Filter("std::abs(pdg) == 3112");
+    auto nsigma = parTree.Filter("std::abs(pdg) == 3222");
     auto npion = parTree.Filter("std::abs(pdg) == 211");
-    auto nsigmaits = parTree.Filter("std::abs(pdg) == 3112 && ITSTrackInd >=0");
+    auto nsigmaits = parTree.Filter("std::abs(pdg) == 3222 && ITSTrackInd >=0");
     auto npionits = parTree.Filter("std::abs(pdg) == 211 && ITSTrackInd >=0");
-    auto nsigmatpc = parTree.Filter("std::abs(pdg) == 3112 && TPCTrackInd >=0");
+    auto nsigmatpc = parTree.Filter("std::abs(pdg) == 3222 && TPCTrackInd >=0");
     auto npiontpc = parTree.Filter("std::abs(pdg) == 211 && TPCTrackInd >=0");
-    auto nsigmaitstpc = parTree.Filter("std::abs(pdg) == 3112 && (ITSTPCTrackInd >=0 || ITSTPCABTrackInd >=0)");
+    auto nsigmaitstpc = parTree.Filter("std::abs(pdg) == 3222 && (ITSTPCTrackInd >=0 || ITSTPCABTrackInd >=0)");
     auto npionitstpc = parTree.Filter("std::abs(pdg) == 211 && (ITSTPCTrackInd >=0 || ITSTPCABTrackInd >=0)");
-    auto nsigmaf = parTree.Filter("std::abs(pdg) == 3112 && (isFakeITS >0 || isFakeTPC > 0 || isFakeITSTPC >0 || isFakeITSTPCAB >0)");
-    auto nsigmarec = parTree.Filter("std::abs(pdg) == 3112 && (ITSTPCTrackInd >=0 || ITSTPCABTrackInd >=0 || TPCTrackInd >=0 || ITSTrackInd >=0)");
+    auto nsigmaf = parTree.Filter("std::abs(pdg) == 3222 && (isFakeITS >0 || isFakeTPC > 0 || isFakeITSTPC >0 || isFakeITSTPCAB >0)");
+    auto nsigmarec = parTree.Filter("std::abs(pdg) == 3222 && (ITSTPCTrackInd >=0 || ITSTPCABTrackInd >=0 || TPCTrackInd >=0 || ITSTrackInd >=0)");
     auto npionrec = parTree.Filter("std::abs(pdg) == 211 && (ITSTPCTrackInd >=0 || ITSTPCABTrackInd >=0 || TPCTrackInd >=0 || ITSTrackInd >=0)");
     auto npionf = parTree.Filter("std::abs(pdg) == 211 && (isFakeITS >0 || isFakeTPC > 0 || isFakeITSTPC >0 || isFakeITSTPCAB >0)");
 
@@ -195,7 +197,7 @@ void Filtering()
         int mId, evId;
         int tracktype = -1;
         int faketype = -1;
-        if (std::abs(pArr->pdg) == 3112)
+        if (std::abs(pArr->pdg) == 3222)
         {
             if (pArr->ITSTrackInd >= 0)
                 tracktype = 0;
@@ -340,7 +342,7 @@ void Filtering()
                 info[n].pt_mother = motherpt[evId][index];
                 info[n].rapid_mother = motherrapid[evId][index];
                 info[n].Rmother = (sqrt(pionR[0] * pionR[0] + pionR[1] * pionR[1] + pionR[2] * pionR[2]) - motherR[evId][index]);
-                
+
                 if (pArr->ITSTrackInd >= 0 || pArr->TPCTrackInd >= 0 || pArr->ITSTPCTrackInd >= 0 || pArr->ITSTPCABTrackInd >= 0)
                 {
 

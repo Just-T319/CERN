@@ -1,13 +1,11 @@
 
-// step0 : set the DCAFitter : cut on chi2<5 
+// step0 : set the DCAFitter : cut on chi2<5
 // step 1 : take ITS tracks
 // step 2 : take ITS-TPC tracks
 // step3 : Cut on the minimum V0radius : the reconstructed one has to be> 17(2 cm of tolerance)
-// step3 .1 : Cut on the chi2 < 0 
+// step3 .1 : Cut on the chi2 < 0
 // step4 : Cut on invariant mass
 // step5 : --->check the results
-
-
 
 #include <array>
 #include <cmath>
@@ -15,6 +13,11 @@
 #include <vector>
 
 #include "TGeoGlobalMagField.h"
+
+#include "KFParticle.h"
+#include "KFVertex.h"
+#include "KFPVertex.h"
+#include "KFPTrack.h"
 
 #include "Framework/ConfigParamRegistry.h"
 
@@ -45,8 +48,9 @@
 #include "DataFormatsGlobalTracking/RecoContainer.h"
 #include "ReconstructionDataFormats/VtxTrackRef.h"
 #include "SimulationDataFormat/MCEventLabel.h"
+#include <string>
 
-                                                                                   using namespace std;
+using namespace std;
 
 struct PInfo
 {
@@ -63,11 +67,11 @@ struct PInfo
     unsigned char isFakeTPC = 0u;
     unsigned char isFakeITSTPC = 0u;
     unsigned char isFakeITSTPCAB = 0u;
-    
 };
 
 void Fitter()
 {
+    string FITTEROPTION = "DCA"; // "DCA" or "KFParticle"
 
     using namespace o2;
     using namespace vertexing;
@@ -321,6 +325,7 @@ void Fitter()
                 {
                     if (std::abs(info[n][k].pdg) == 211 && ((info[n][k].ITSTPCABTrackInd >= 0 && info[n][k].isFakeITSTPCAB <= 0 && info[n][k].ITSTPCPVInd < 0) || (info[n][k].ITSTPCTrackInd >= 0 && info[n][k].isFakeITSTPC <= 0 && info[n][k].ITSTPCPVInd < 0)))
                     {
+                        if (FITTEROPTION == "DCA"){
                         o2::track::TrackParCov SigmaTr;
                         o2::track::TrackParCov PionTr;
                         DCAFitter2 ft2;
@@ -333,47 +338,65 @@ void Fitter()
                         float pionPabs = 0;
                         float sigmaPabs = 0;
 
-                        SigmaTr = itsArr->at(info[n][m].ITSTrackInd).getParamOut();
+                        float etaS = 0;
+                        float phiS = 0;
+                        float etaP = 0;
+                        float phiP = 0;
+
+                        SigmaTr = itsArr->at(info[n][m].ITSTrackInd);//.getParamOut();//=
                         itsArr->at(info[n][m].ITSTrackInd).getPxPyPzGlo(sigmaP);
                         sigmaPabs = itsArr->at(info[n][m].ITSTrackInd).getP();
+                        etaS = itsArr->at(info[n][m].ITSTrackInd).getEta();
+                        phiS = itsArr->at(info[n][m].ITSTrackInd).getPhi();
 
                         if ((info[n][k].ITSTPCTrackInd >= 0 && info[n][k].isFakeITSTPC <= 0 && info[n][k].ITSTPCPVInd < 0))
                         {
-                            PionTr = itstpcArr->at(info[n][k].ITSTPCTrackInd);
+                            PionTr = itstpcArr->at(info[n][k].ITSTPCTrackInd);//.getParamOut();
                             pionPabs = itstpcArr->at(info[n][k].ITSTPCTrackInd).getP();
                             itstpcArr->at(info[n][k].ITSTPCTrackInd).getPxPyPzGlo(pionP);
+                            etaP = itstpcArr->at(info[n][k].ITSTPCTrackInd).getEta();
+                            phiP = itstpcArr->at(info[n][k].ITSTPCTrackInd).getPhi();
                         }
                         else if ((info[n][k].ITSTPCABTrackInd >= 0 && info[n][k].isFakeITSTPCAB <= 0 && info[n][k].ITSTPCPVInd < 0))
                         {
-                            PionTr = itstpcArr->at(info[n][k].ITSTPCABTrackInd);
+                            PionTr = itstpcArr->at(info[n][k].ITSTPCABTrackInd);//.getParamOut();
                             pionPabs = itstpcArr->at(info[n][k].ITSTPCABTrackInd).getP();
                             itstpcArr->at(info[n][k].ITSTPCABTrackInd).getPxPyPzGlo(pionP);
+                            etaP = itstpcArr->at(info[n][k].ITSTPCABTrackInd).getEta();
+                            phiP = itstpcArr->at(info[n][k].ITSTPCABTrackInd).getPhi();
                         }
 
                         PionTr.checkCovariance();
                         SigmaTr.checkCovariance();
-
-                        ft2.process(PionTr, SigmaTr);
-                        if (ft2.getChi2AtPCACandidate() <= 0 ||ft2.getChi2AtPCACandidate() > 3) //cut on chi2 
-                            continue;
-
                         std::array<float, 3> R = ft2.getPCACandidatePos();
 
-                        if (sqrt(R[0] * R[0] + R[1] * R[1]) < 17) //cut on radius
-                            continue;
+                        ft2.process(PionTr, SigmaTr);
+                        //if (ft2.getChi2AtPCACandidate() <= 0 || ft2.getChi2AtPCACandidate() > 3) // cut on chi2
+                            //continue;
+
+                        //if (sqrt(R[0] * R[0] + R[1] * R[1]) < 17) // cut on radius
+                            //continue;
+
+                        //if (std::abs(etaS - etaP) > 0.3 || std::abs(phiS - phiP) > 0.3)
+                            //continue;
 
                         h.Fill(ft2.getChi2AtPCACandidate());
                         tempcount++;
                         float pionE = sqrt(0.13957 * 0.13957 + pionPabs * pionPabs);
-                        float sigmaE = sqrt(1.1974*1.1974 + sigmaPabs*sigmaPabs);
+                        float sigmaE = sqrt(1.1974 * 1.1974 + sigmaPabs * sigmaPabs); // 1.1974
                         float neutronPabs = sqrt(pow((sigmaP[2] - pionP[2]), 2) + pow((sigmaP[1] - pionP[1]), 2) + pow((sigmaP[0] - pionP[0]), 2));
-                        float neutronM = sqrt((sigmaE-pionE)*(sigmaE-pionE)-neutronPabs*neutronPabs);
-                        if (neutronM > 0.990 || neutronM < 0.89 ) continue;
+                        float neutronM = sqrt((sigmaE - pionE) * (sigmaE - pionE) - neutronPabs * neutronPabs);
+                        // if (neutronM > 0.990 || neutronM < 0.89 ) continue;
                         auto neutronE = sqrt(0.93957 * 0.93957 + pow((sigmaP[2] - pionP[2]), 2) + pow((sigmaP[1] - pionP[1]), 2) + pow((sigmaP[0] - pionP[0]), 2));
-                        float sigmaM = sqrt((neutronE + pionE)*(neutronE + pionE)-sigmaPabs*sigmaPabs);
-                        //hmass.Fill(neutronM);//sigma and pion hypothesis
-                        if (sigmaM > 1.3 || sigmaM < 1.1 ) continue;
-                        hmass.Fill(sigmaM); //pion and neutron hypothesis
+                        float sigmaM = sqrt((neutronE + pionE) * (neutronE + pionE) - sigmaPabs * sigmaPabs);
+                        // hmass.Fill(neutronM);//sigma and pion hypothesis
+                        if (sigmaM > 1.3 || sigmaM < 1.1)
+                            continue;
+                        hmass.Fill(sigmaM); // pion and neutron hypothesis
+                        }
+                        if (FITTEROPTION == "KFParticle"){
+
+                        }
                     }
                 }
             }
@@ -381,7 +404,7 @@ void Fitter()
     }
 
     std::cout << tempcount << std::endl;
-    TFile outputFile("/home/justas_t/DCA_Fitter_Random.root", "recreate");
+    TFile outputFile("/home/justas_t/SigmaP/DCA_Fitter_SigmaP.root", "recreate");
 
     h.Write();
 
